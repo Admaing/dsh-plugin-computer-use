@@ -91,7 +91,6 @@ async function main() {
   const argv = process.argv.slice(2)
   const cacheDir = readCacheDir(argv)
   const config = resolveConfig(cacheDir === null ? {} : { helperCacheDir: cacheDir })
-  if (cacheDir !== null) line('helper cache', cacheDir)
   let backend
   try {
     backend = await resolveBackend(config)
@@ -104,6 +103,21 @@ async function main() {
     // Under `auto`, a compile failure degrades to AppleScript. Say so: a silent
     // downgrade is the hardest kind of computer-use bug to notice.
     line('native unavailable', backend.nativeError)
+  }
+  if (typeof backend.helperLocation === 'function') {
+    // The helper's path is a permission identity: Accessibility is granted to the
+    // binary, so printing where that binary is decides whether the user grants the
+    // right file or hunts for one that is not there.
+    const helper = await backend.helperLocation(config)
+    line('helper cache', helper.volatile ? `${helper.directory}  (volatile)` : helper.directory)
+    if (helper.volatile) {
+      console.log(
+        '         the system reclaims this directory, so an Accessibility grant made against\n' +
+          `         ${helper.path}\n` +
+          '         stops working once it does. Set `helperCacheDir` to a stable path, for\n' +
+          '         example ~/Library/Caches/dsh-plugin-computer-use, and start a new session.',
+      )
+    }
   }
 
   let facts

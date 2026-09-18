@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
+import path from 'node:path'
 
 import { DEFAULT_CONFIG } from '../src/config.js'
 import { applescriptBackend, nativeBackend, resolveBackend } from '../src/backends/index.js'
-import { act, ensureHelper, probe } from '../src/backends/native.js'
+import { act, ensureHelper, helperLocation, probe } from '../src/backends/native.js'
 
 const onMac = process.platform === 'darwin'
 const skip = onMac ? false : 'the native backend is macOS only'
@@ -36,6 +37,13 @@ describe('the native backend', { skip }, () => {
     assert.ok(main.widthPixels >= main.widthPoints, 'backing pixels cannot be fewer than points')
     assert.equal(typeof facts.accessibilityTrusted, 'boolean')
     assert.equal(typeof facts.screenCaptureAllowed, 'boolean')
+  })
+
+  it('reports where the helper is, and that an explicit cache directory is durable', async () => {
+    const location = await helperLocation(testConfig())
+    assert.equal(location.path, await ensureHelper(testConfig()))
+    assert.equal(location.directory, path.dirname(location.path))
+    assert.equal(location.volatile, false, 'an explicitly configured cache directory is not reclaimable')
   })
 
   it('executes a batch and reports each action', async () => {

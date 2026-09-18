@@ -60,4 +60,33 @@ describe('the permission gates', { skip: gates === null }, () => {
   it('names the backend it was resolved to', () => {
     assert.throws(() => gates.assertInputAllowed(NO_AX, 'applescript'), /backend: applescript/)
   })
+
+  it('warns that a grant against a reclaimable helper cannot stick', () => {
+    // The fallback cache directory is purged by the OS, so a grant made against a
+    // helper there stops working later. Saying so is the difference between a user
+    // who fixes the cache and one who re-grants a permission every few days.
+    assert.throws(
+      () =>
+        gates.assertInputAllowed(NO_AX, 'native', {
+          directory: '/var/folders/xx/T/dsh-plugin-computer-use',
+          volatile: true,
+        }),
+      /which macOS may delete at any time[\s\S]*helperCacheDir/,
+    )
+  })
+
+  it('says nothing about the helper when its directory is durable', () => {
+    assert.throws(
+      () =>
+        gates.assertInputAllowed(NO_AX, 'native', {
+          directory: '/Users/someone/Library/Caches/dsh-plugin-computer-use',
+          volatile: false,
+        }),
+      (error) => {
+        assert.doesNotMatch(error.message, /macOS may delete/)
+        assert.match(error.message, /\(backend: native\)$/)
+        return true
+      },
+    )
+  })
 })

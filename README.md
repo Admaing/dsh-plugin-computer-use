@@ -186,6 +186,23 @@ an unsigned-blob download; it costs about 0.6 s once. If `~/Library/Caches` is n
 writable it falls back to the system temporary directory rather than losing the native
 backend.
 
+That fallback has a cost worth knowing, because the helper's **path is a permission
+identity**: macOS binds an Accessibility grant to the binary, not to the tool. The system
+temporary directory is reclaimed without warning, so a grant made against a helper there
+stops working later, silently. The doctor prints the directory and the exact binary, and
+says so when it is the volatile one:
+
+```
+  helper cache          /var/folders/…/T/dsh-plugin-computer-use  (volatile)
+         the system reclaims this directory, so an Accessibility grant made against
+         /var/folders/…/T/dsh-plugin-computer-use/computer-helper-27836c7760923b3c
+         stops working once it does. Set `helperCacheDir` to a stable path, for
+         example ~/Library/Caches/dsh-plugin-computer-use, and start a new session.
+```
+
+Set `helperCacheDir` to a stable path when the host cannot write the user cache — a
+sandbox that only permits writes inside the workspace, for example.
+
 Screenshots go through the system `screencapture` binary, not the helper, because
 `CGDisplayCreateImage` is **obsoleted from macOS 15 onward** (ScreenCaptureKit replaced
 it). Capture is the part of this tool most likely to break on a future release, so it

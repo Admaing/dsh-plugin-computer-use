@@ -177,7 +177,10 @@ async function executeBatch({ args, exec, ctx, config }) {
   const inputActions = actions.filter((action) => isInputAction(action.type))
   let records = []
   if (inputActions.length > 0) {
-    assertInputAllowed(facts, backend.name)
+    // `probe` above already compiled the helper, so this is a cached lookup, not
+    // a second compile. It is what lets the refusal below name a real path.
+    const helper = typeof backend.helperLocation === 'function' ? await backend.helperLocation(config) : undefined
+    assertInputAllowed(facts, backend.name, helper)
     try {
       records = await backend.act(config, inputActions, signal)
     } catch (error) {
@@ -346,13 +349,36 @@ export function assertScreenCaptureAllowed(facts, backendName) {
  *
  * @param {object} facts - the probe result.
  * @param {string} backendName - the resolved backend's name.
+ * @param {{directory?: string, volatile?: boolean}} [helper] - where the compiled helper lives, when the backend has one.
  */
-export function assertInputAllowed(facts, backendName) {
+export function assertInputAllowed(facts, backendName, helper) {
   if (facts.accessibilityTrusted !== false) return
   throw new Error(
     'the computer tool cannot click or type because Accessibility permission is not granted to the application ' +
       'hosting this agent. Open System Settings > Privacy & Security > Accessibility, add that application, then ' +
-      `start a new session. Screenshot-only batches keep working meanwhile. (backend: ${backendName})`,
+      `start a new session. Screenshot-only batches keep working meanwhile.${describeVolatileHelper(helper)} ` +
+      `(backend: ${backendName})`,
+  )
+}
+
+/**
+ * Explain a helper that a permission grant cannot stick to.
+ *
+ * A grant is bound to the helper's path, so a helper in the directory macOS
+ * reclaims can hold one only until the system purges it. Saying nothing there
+ * leaves the user granting a permission that quietly stops working, which is
+ * exactly the failure the permission gates exist to prevent.
+ *
+ * @param {{directory?: string, volatile?: boolean}} [helper] - the resolved helper location.
+ * @returns {string} a sentence to append, or the empty string when the location is stable.
+ */
+function describeVolatileHelper(helper) {
+  if (helper?.volatile !== true) return ''
+  return (
+    ` The helper this backend compiled lives in ${String(helper.directory)}, which macOS may delete` +
+    ' at any time: an Accessibility grant made against that copy stops working once it is reclaimed.' +
+    ' Set `helperCacheDir` to a stable path such as ~/Library/Caches/dsh-plugin-computer-use,' +
+    ' start a new session, and grant the helper there.'
   )
 }
 

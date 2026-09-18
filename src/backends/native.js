@@ -51,15 +51,36 @@ export function ensureHelper(config) {
   return pending
 }
 
+/** The last-resort cache directory: the one macOS reclaims without warning. */
+function volatileCacheDirectory() {
+  return path.join(tmpdir(), 'dsh-plugin-computer-use')
+}
+
+/**
+ * Whether a helper path sits in the directory macOS reclaims.
+ *
+ * A grant — Accessibility in particular — is bound to the helper's path, and the
+ * system temporary directory is purged without warning, so a grant made against
+ * a helper there stops working later and silently. Callers use this to say so up
+ * front rather than let the user find out by watching clicks land nowhere.
+ *
+ * @param {string} target - the helper binary or its directory.
+ * @returns {boolean} true when the path is inside the reclaimable directory.
+ */
+export function isVolatileHelperCache(target) {
+  const root = volatileCacheDirectory()
+  return target === root || target.startsWith(`${root}${path.sep}`)
+}
+
 /**
  * Choose a writable directory to hold the compiled helper.
  *
  * The user cache is preferred so a grant survives reboots, but a locked-down or
  * read-only home directory must not cost the user the native backend: falling
- * back to the system temporary directory keeps full input control available,
- * at the price of recompiling after the OS reclaims it. An explicitly
- * configured directory is honoured exactly, so a misconfiguration is reported
- * rather than quietly worked around.
+ * back to the system temporary directory keeps full input control available, at
+ * the price of recompiling — and re-granting — once the OS reclaims it. An
+ * explicitly configured directory is honoured exactly, so a misconfiguration is
+ * reported rather than quietly worked around.
  *
  * @param {import('../config.js').ComputerUseConfig} config - the resolved configuration.
  * @returns {Promise<string>} a directory that exists and is writable.
@@ -74,10 +95,26 @@ async function resolveCacheDirectory(config) {
     await mkdir(preferred, { recursive: true })
     return preferred
   } catch {
-    const fallback = path.join(tmpdir(), 'dsh-plugin-computer-use')
+    const fallback = volatileCacheDirectory()
     await mkdir(fallback, { recursive: true })
     return fallback
   }
+}
+
+/**
+ * Where the compiled helper actually is, and whether that location can hold a grant.
+ *
+ * Any message naming `~/Library/Caches/dsh-plugin-computer-use` is wrong the moment
+ * the fallback above kicks in: the helper is somewhere else, and a grant against it
+ * will not survive. Resolving the location lets the permission gates name the path
+ * they actually mean.
+ *
+ * @param {import('../config.js').ComputerUseConfig} config - the resolved configuration.
+ * @returns {Promise<{path: string, directory: string, volatile: boolean}>} the helper's location.
+ */
+export async function helperLocation(config) {
+  const binary = await ensureHelper(config)
+  return { path: binary, directory: path.dirname(binary), volatile: isVolatileHelperCache(binary) }
 }
 
 /**
@@ -263,8 +300,7 @@ export async function capture(displayIndex, signal) {
       throw new Error(
         'the screen could not be captured because Screen Recording permission is not granted. ' +
           'Grant it in System Settings > Privacy & Security > Screen Recording to the application ' +
-          'running this agent (and, if listed, to the "computer-helper" binary in ' +
-          '~/Library/Caches/dsh-plugin-computer-use), then start a new session.',
+          'running this agent, then start a new session.',
       )
     }
     throw error
