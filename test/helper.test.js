@@ -4,7 +4,7 @@ import path from 'node:path'
 
 import { DEFAULT_CONFIG } from '../src/config.js'
 import { applescriptBackend, nativeBackend, resolveBackend } from '../src/backends/index.js'
-import { act, ensureHelper, helperLocation, probe } from '../src/backends/native.js'
+import { act, capture, ensureHelper, helperLocation, probe } from '../src/backends/native.js'
 
 const onMac = process.platform === 'darwin'
 const skip = onMac ? false : 'the native backend is macOS only'
@@ -37,6 +37,18 @@ describe('the native backend', { skip }, () => {
     assert.ok(main.widthPixels >= main.widthPoints, 'backing pixels cannot be fewer than points')
     assert.equal(typeof facts.accessibilityTrusted, 'boolean')
     assert.equal(typeof facts.screenCaptureAllowed, 'boolean')
+  })
+
+  it('reports the backing pixels a capture actually produces', async (t) => {
+    // `CGDisplayPixelsWide` reports the *point* size when a display runs a scaled
+    // mode, so the probe used to claim 1x on a display whose capture came back at
+    // 2x — and the doctor printed both numbers, contradicting itself two sections
+    // apart. The capture is the evidence, so the two must agree.
+    const facts = await probe(testConfig())
+    if (facts.screenCaptureAllowed !== true) return t.skip('Screen Recording is not granted on this machine')
+    const shot = await capture(0, undefined)
+    assert.equal(shot.width, facts.displays[0].widthPixels)
+    assert.equal(shot.height, facts.displays[0].heightPixels)
   })
 
   it('reports where the helper is, and that an explicit cache directory is durable', async () => {

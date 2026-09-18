@@ -121,8 +121,15 @@ static NSDictionary<NSString *, NSNumber *> *modifierFlags(void) {
 /// Describe one display the way the JavaScript coordinate mapper needs it.
 static NSDictionary *describeDisplay(CGDirectDisplayID display) {
   CGRect bounds = CGDisplayBounds(display);
-  size_t pixelsWide = CGDisplayPixelsWide(display);
-  size_t pixelsHigh = CGDisplayPixelsHigh(display);
+  // `CGDisplayPixelsWide` reports the *point* size when a display runs a scaled
+  // mode — a 1470x956-point mode on a 2x panel reports 1470 px — so it cannot
+  // describe the backing store. The mode knows the real size, and it is the same
+  // size `screencapture` writes, so what the doctor prints and what the capture
+  // produces agree.
+  CGDisplayModeRef mode = CGDisplayCopyDisplayMode(display);
+  size_t pixelsWide = mode != NULL ? CGDisplayModeGetPixelWidth(mode) : CGDisplayPixelsWide(display);
+  size_t pixelsHigh = mode != NULL ? CGDisplayModeGetPixelHeight(mode) : CGDisplayPixelsHigh(display);
+  if (mode != NULL) CFRelease(mode);
   double backingScale = bounds.size.width > 0 ? (double)pixelsWide / bounds.size.width : 1.0;
   return @{
     @"id" : @((unsigned int)display),
