@@ -1,0 +1,16 @@
+# Dependencies, if anyone ever adds them.
+node_modules/
+
+# Compiled native helper: built on demand into the user cache, never committed.
+*.o
+*.tmp
+computer-helper-*
+
+# Local scratch space used while developing this plugin.
+.scratch/
+
+# Editor and OS noise.
+.DS_Store
+*.swp
+.idea/
+.vscode/

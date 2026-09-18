@@ -1,0 +1,74 @@
+# An example agent-preset composition row for dsh-plugin-computer-use.
+#
+# Copy a shipped preset and add the row below to the copy; never edit a preset
+# that ships with the deployment, because an upgrade overwrites it.
+#
+#   dsh agent-presets list                  # find the real paths
+#   dsh agent-presets copy standard desktop-agent
+#   # then edit the copy's agent.cordis.yml and add the row
+#
+# The plugin provides no service and owns no process-wide state: it registers a
+# tool and a prompt section into the calling scope, so it sits loose in a preset
+# and needs no `isolate` realm. Wrapping it in one would actually break it — the
+# tool resolves the host's `attachments`, `llm` and `systemPrompt` services, and
+# a realm the preset did not populate is invisible to it.
+
+# ── the minimal row ─────────────────────────────────────────────────────────
+
+- id: tool-computer-use
+  name: dsh-plugin-computer-use
+
+# ── the same row, configured ────────────────────────────────────────────────
+#
+# Replace the row above with this one. Do not keep both: each registers a tool
+# named `computer`, and the composition would be ambiguous.
+#
+# - id: tool-computer-use
+#   name: dsh-plugin-computer-use
+#   config:
+#     # Register the tool at all. `false` keeps the row in place but inert, which
+#     # is handy for toggling a capability without deleting the row.
+#     enabled: true
+#
+#     # `auto` prefers the compiled native helper and degrades to AppleScript when
+#     # the Xcode Command Line Tools are missing. Pin it when you want a missing
+#     # toolchain to be an error rather than a silent downgrade.
+#     backend: auto
+#
+#     # Which display to drive, 0-based with the main display first. The model's
+#     # coordinates are always mapped onto this display.
+#     display: 0
+#
+#     # Upper bound on one action batch. Short batches are safer: the screenshot
+#     # is taken once, after the whole batch.
+#     maxActionsPerCall: 25
+#
+#     # Duration of a `wait` action, in milliseconds.
+#     waitMs: 2000
+#
+#     # Pause after input events, before the result screenshot, so a repainting
+#     # window is captured settled.
+#     settleMs: 250
+#
+#     # Allow-list of action types. `null` permits everything.
+#     #
+#     # A read-only agent — it can look, but never touch:
+#     # allowedActions: [screenshot, wait]
+#     #
+#     # Navigation only — no clicking, no typing:
+#     # allowedActions: [screenshot, move, scroll, wait]
+#     allowedActions: null
+#
+#     # Flip the scroll sign convention if a particular app disagrees with the
+#     # Codex convention (positive `scroll_y` scrolls down).
+#     invertScroll: false
+#
+#     # Where to cache the compiled helper. `null` uses
+#     # ~/Library/Caches/dsh-plugin-computer-use, falling back to the system
+#     # temporary directory when the home cache is not writable.
+#     helperCacheDir: null
+#
+#     # Refuse to run when the calling model route does not declare image input.
+#     # Every result carries a screenshot, so a text-only route would spend a
+#     # capture and a batch to produce something the model cannot read.
+#     requireImageCapableModel: true

@@ -1,0 +1,59 @@
+{
+  "name": "dsh-plugin-computer-use",
+  "version": "0.1.0",
+  "description": "Codex-style computer use for DeepSeek Harness: a `computer` tool that screenshots, clicks, types, scrolls and drags the macOS desktop through a native CoreGraphics helper.",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./actions": "./src/actions.js",
+    "./keys": "./src/keys.js",
+    "./geometry": "./src/geometry.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "dsh-computer-use-doctor": "bin/doctor.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "examples",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "doctor": "node bin/doctor.js",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": ">=0.1.5-rc.2"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-tools": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh-tools": "^0.1.5-rc.2"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis",
+    "cordis-plugin",
+    "computer-use",
+    "cua",
+    "desktop-automation",
+    "macos",
+    "screenshot",
+    "agent"
+  ],
+  "license": "MIT",
+  "os": [
+    "darwin"
+  ]
+}
