@@ -175,8 +175,10 @@ always states the ratio it can check against:
 screenshot 2940x1912 px · display 1470x956 pt · backing scale 2x · 1 screenshot px = 0.5x0.5 display pt
 ```
 
-The capture is treated as authoritative about backing pixels, because
-`CGDisplayPixelsWide` reports the *point* size on a display running a scaled Retina mode.
+The capture stays authoritative about backing pixels even though the helper now asks the
+display mode for them: `CGDisplayModeGetPixelWidth` reports the real backing store, where
+`CGDisplayPixelsWide` reports the *point* size on a display running a scaled Retina mode —
+but a mode is a claim and the PNG is evidence.
 
 ### Why the helper is compiled, and why screenshots skip it
 
