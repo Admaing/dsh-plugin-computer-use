@@ -18,6 +18,7 @@ import * as native from './native.js'
  * @property {(config: object, signal?: AbortSignal) => Promise<object>} probe - display and permission facts.
  * @property {(displayIndex: number, signal?: AbortSignal) => Promise<{data: Uint8Array, width: number, height: number}>} capture - one PNG.
  * @property {(config: object, actions: object[], signal?: AbortSignal) => Promise<object[]>} act - post a batch.
+ * @property {(config: object) => Promise<{path: string, directory: string, volatile: boolean}>} [helperLocation] - where a compiled helper lives and whether a grant there survives; absent when the backend compiles nothing.
  */
 
 /** The native helper backend: precise input, multi-display, needs a toolchain. */
