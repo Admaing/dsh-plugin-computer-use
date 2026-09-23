@@ -256,10 +256,23 @@ degrade, the reason is carried on the resolved backend so diagnostics can explai
 
 ```sh
 npm install     # fetches @deepseek-ai/dsh-tools, needed by the schema suites
-npm test        # 102 tests: pure logic + a real compile of the native helper
+npm test        # 108 tests: pure logic + a real compile of the native helper
 npm run doctor  # check permissions on this machine
 npm run smoke   # drive the real tool once and write the screenshot to .scratch/
 ```
+
+Two more checks drive the tool against the machine and read the result back, so a
+regression in the coordinate mapping or the input path fails loudly instead of producing
+a plausible screenshot:
+
+```sh
+npm run check:input       # move the cursor, read it back, compare against the mapping
+npm run check:click-type  # click and type into a scratch document, then read the text
+```
+
+`check:input` is self-verifying: it reads the cursor with the helper before and after, so
+a wrong scale factor shows up as a wrong coordinate. `check:click-type` needs a focused
+`TextEdit` window and skips rather than clicking into whatever else holds focus.
 
 The suites that do not touch the harness package run even without `npm install`; the
 tool-schema suites skip themselves with a note instead of failing.
