@@ -35,7 +35,8 @@
     "doctor": "node bin/doctor.js",
     "smoke": "node scripts/smoke.mjs",
     "check:input": "node scripts/input-check.mjs",
-    "check:click-type": "node scripts/click-type-check.mjs"
+    "check:click-type": "node scripts/click-type-check.mjs",
+    "check:scroll": "node scripts/scroll-check.mjs"
   },
   "peerDependencies": {
     "@deepseek-ai/dsh-tools": ">=0.1.5-rc.2"

@@ -268,11 +268,16 @@ a plausible screenshot:
 ```sh
 npm run check:input       # move the cursor, read it back, compare against the mapping
 npm run check:click-type  # click and type into a scratch document, then read the text
+npm run check:scroll      # scroll a document and read which way the view moved
 ```
 
 `check:input` is self-verifying: it reads the cursor with the helper before and after, so
 a wrong scale factor shows up as a wrong coordinate. `check:click-type` needs a focused
 `TextEdit` window and skips rather than clicking into whatever else holds focus.
+`check:scroll` asks the Accessibility API for a `TextEdit` document's visible character
+range, which is the only way to tell a downward scroll from an upward one — a screenshot
+cannot say which way the view moved. That check exists because the scroll sign was
+inverted once and nothing noticed.
 
 The suites that do not touch the harness package run even without `npm install`; the
 tool-schema suites skip themselves with a note instead of failing.
