@@ -98,7 +98,9 @@ describe('coordinate mapping', () => {
     const [action] = normalize([{ type: 'scroll', x: 10, y: 20, scroll_x: 0, scroll_y: 100 }])
     assert.equal(action.x, 10)
     assert.equal(action.y, 20)
-    assert.equal(action.deltaY, -100)
+    // Positive `scroll_y` (down) stays positive: CoreGraphics wheel deltas use
+    // the same sign. See the scroll sign convention suite for the measurement.
+    assert.equal(action.deltaY, 100)
   })
 })
 
@@ -138,24 +140,26 @@ describe('action canonicalisation', () => {
 })
 
 describe('scroll sign convention', () => {
-  it('negates Codex deltas, because CoreGraphics counts the other way', () => {
-    // Codex: positive scroll_y moves the view down. CoreGraphics: positive
-    // wheel1 moves it up. The conversion happens exactly once, here.
+  it('passes Codex deltas straight through, because CoreGraphics counts the same way', () => {
+    // Codex: positive scroll_y moves the view down. Measured on macOS: posting
+    // wheel1 = +600 scrolled a 300-line document from line 1 to line 112, while
+    // wheel1 = -600 left it where it was. So the sign passes through unchanged —
+    // an earlier version negated it here and scrolled the wrong way.
     const [down] = normalize([{ type: 'scroll', x: 0, y: 0, scroll_x: 0, scroll_y: 120 }])
-    assert.equal(down.deltaY, -120)
+    assert.equal(down.deltaY, 120)
     const [up] = normalize([{ type: 'scroll', x: 0, y: 0, scroll_x: 0, scroll_y: -120 }])
-    assert.equal(up.deltaY, 120)
+    assert.equal(up.deltaY, -120)
   })
 
   it('can be inverted for a deployment that disagrees', () => {
     const [action] = normalize([{ type: 'scroll', x: 0, y: 0, scroll_x: 0, scroll_y: 120 }], {
       config: { ...DEFAULT_CONFIG, invertScroll: true },
     })
-    assert.equal(action.deltaY, 120)
+    assert.equal(action.deltaY, -120)
   })
 
-  it('converts horizontal deltas too', () => {
+  it('passes horizontal deltas through too', () => {
     const [action] = normalize([{ type: 'scroll', x: 0, y: 0, scroll_x: 60, scroll_y: 0 }])
-    assert.equal(action.deltaX, -60)
+    assert.equal(action.deltaX, 60)
   })
 })

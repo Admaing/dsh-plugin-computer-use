@@ -212,14 +212,16 @@ function normalizeAction(type, raw, context) {
       const scrollY = asFiniteNumber(raw.scroll_y, 'scroll_y')
       const direction = config.invertScroll ? -1 : 1
       // Codex counts scroll amounts as page movement: positive `scroll_y` moves
-      // the view down. CoreGraphics wheel deltas count the opposite way, so the
-      // sign flips here, once, in the one place that knows both conventions.
+      // the view down. A CoreGraphics wheel delta counts the same way — a
+      // positive wheel1 scrolls down — so the sign passes straight through. This
+      // was measured, not assumed: posting +600 scrolled a 300-line document
+      // from its first line to line 112, and -600 left it where it was.
       return {
         type: 'scroll',
         x: at.x,
         y: at.y,
-        deltaX: Math.round(-direction * scrollX),
-        deltaY: Math.round(-direction * scrollY),
+        deltaX: Math.round(direction * scrollX),
+        deltaY: Math.round(direction * scrollY),
         modifiers: normalizeModifiers(raw.keys),
       }
     }
