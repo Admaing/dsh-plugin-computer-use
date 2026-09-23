@@ -111,6 +111,37 @@ input delivery
 `--test-input` moves the cursor by 40 points, confirms it followed, and puts it back —
 a permission flag is an assertion, a moved cursor is evidence.
 
+## Model requirements
+
+Every result carries a screenshot, so the calling route must declare **image input**.
+The tool checks this before doing any work and refuses rather than spending a capture on
+a model that cannot read it:
+
+```
+Error: the computer tool returns screenshots as images, but model "…" does not declare
+image input. Switch to an image-capable model, or set `requireImageCapableModel: false`
+to run it blind.
+```
+
+On a provider that declares its models explicitly, that declaration is not automatic. A
+provider configured through `llm-pi-ai` defaults **every** model to `input: ["text"]`, so a
+vision model that never states its modalities is treated as text-only — and this tool, and
+`read_image`, will both refuse. Name the modalities on the model entry:
+
+```yaml
+llm-pi-ai:
+  providers:
+    <provider>:
+      models:
+        - id: some-vision-model
+          name: some-vision-model
+          input: [text, image]    # without this the model reads as text-only
+```
+
+Setting `requireImageCapableModel: false` is the escape hatch, but it does not make the
+model see: the screenshot is still captured and returned, and the model simply cannot use
+it. Prefer declaring the modalities.
+
 ## Configuration
 
 | Field | Default | Meaning |
