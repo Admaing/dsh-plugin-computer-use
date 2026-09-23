@@ -1,0 +1,19 @@
+# Bundle patch for dsh-plugin-computer-use.
+#
+# Installing this package as a profile bundle inserts the `computer` tool row
+# into the profile composition, so every session in that profile can drive the
+# desktop.
+#
+# The plugin provides no service and owns no process-wide state: it registers a
+# tool and a prompt section into the registry it is mounted against. That is why
+# the row sits loose here rather than inside an `isolate` realm — it consumes the
+# host's `attachments`, `llm` and `systemPrompt` services, and a realm nothing
+# populated would be invisible to it.
+#
+# To scope the tool to one agent instead of the whole profile, drop this bundle
+# and add the same row to an agent preset's `agent.cordis.yml`; see
+# `examples/agent.cordis.yml` for the configurable form.
+
+- insert:
+    - id: tool-computer-use
+      name: dsh-plugin-computer-use
